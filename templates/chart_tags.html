@@ -31,6 +31,8 @@
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/a">Artiste</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/">Album</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/t">Tag</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/l">LOG</a></li>
+
                     </ul>
                 </div>
             </div>
@@ -61,7 +63,7 @@
                                     <th scope="col">#</th>
                                     <th scope="col">Name</th>
                                     <th scope="col">Reach</th>
-                                    <th scope="col">Summary</th>
+                                    <th scope="col">Tagging</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -70,7 +72,7 @@
                                         <th scope="row">{{ track_info.index }}</th>
                                         <td>{{ track_info.name }}</td>
                                         <td>{{ track_info.reach }}</td>
-                                        <td>{{ track_info.summary }}</td>
+                                        <td>{{ track_info.taggings }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

@@ -1,8 +1,11 @@
 import pymongo
 import requests
+import plotly.graph_objs as go
 import json
+import matplotlib.pyplot as plt
 from flask import Flask, redirect, render_template, request, url_for
-from BDmongo import insert_artist_info_into_db, check_artist_in_db, check_tag_in_db, insert_tag_info_into_db, check_album_in_db, insert_album_info_into_db
+from BDmongo import insert_artist_info_into_db, check_artist_in_db, check_tag_in_db, insert_tag_info_into_db, check_album_in_db, insert_album_info_into_db,log_consultation,count_consultations
+from datetime import datetime
 #API key
 XI_API_KEY = "43fd3e0df818d835e6b144ad21a7765a"
 #Url pour mongo
@@ -25,15 +28,15 @@ def get_info_charttags(api_key, chart_type, page=1, limit=10):
     for index, tag in enumerate(tags, start=1):
         name = tag.get('name')
         reach = tag.get('reach')
-        wiki = tag.get('wiki', {})
-        summary = wiki.get('summary') if 'summary' in wiki else None
+        taggings = tag.get('taggings')
         tag_info = {
             'index': index,
             'name': name,
             'reach': reach,
-            'summary': summary
+            'taggings':taggings
         }
         tag_info_list.append(tag_info)
+    
     return tag_info_list
 
 
@@ -111,7 +114,6 @@ def get_tag_info(api_key, tag):
             'content': tag_info.get('wiki', {}).get('content')
         }
     }
-    
     return tag_result
 
 
@@ -187,6 +189,24 @@ app = Flask(__name__, static_folder='templates/', static_url_path='')
 def home():
     message = request.args.get('message')  
     return render_template('Lastfm.html', message=message)
+
+@app.route('/l', methods=['GET'])
+def log():
+    artist_index, track_index, tag_index = count_consultations()
+    print(artist_index)
+    print(track_index)
+    print(tag_index)
+    
+    labels1 = [row[1] for row in artist_index]
+    values1 = [row[0] for row in artist_index]
+    labels2 = [row[1] for row in track_index]
+    values2 = [row[0] for row in track_index]
+    labels3 = [row[1] for row in tag_index]
+    values3 = [row[0] for row in tag_index]
+
+    
+    return render_template('log.html',labels1=labels1, labels2=labels2, labels3=labels3, values1=values1, values2=values2, values3=values3)
+
 @app.route('/t')
 def t():
     return render_template('Tag.html')
@@ -197,6 +217,8 @@ def a():
 @app.route('/c',methods=['GET'])
 def c():
     track_info_list = get_info_chart(XI_API_KEY, 'tracks')
+    log_consultation("tracks")
+
     
     tracks_with_index = [(index + 1, track_info) for index, track_info in enumerate(track_info_list)]
 
@@ -205,15 +227,15 @@ def c():
 @app.route('/c2',methods=['GET'])
 def c2():
     track_info_list = get_info_chartartist(XI_API_KEY, 'artists')
-    print(track_info_list)
+    log_consultation("artists")
     tracks_with_index = [(index + 1, track_info) for index, track_info in enumerate(track_info_list)]
-
+    print(count_consultations())
     return render_template('chart_artist.html',tracks_with_index=tracks_with_index)
 
 @app.route('/c3',methods=['GET'])
 def c3():
     track_info_list = get_info_charttags(XI_API_KEY, 'tags')
-    print(track_info_list)
+    log_consultation("tags")
     tracks_with_index = [(index + 1, track_info) for index, track_info in enumerate(track_info_list)]
 
     return render_template('chart_tags.html',tracks_with_index=tracks_with_index)
@@ -264,5 +286,11 @@ def result():
 
 
 if __name__ == '__main__':
-      app.run(host='0.0.0.0')
       app.run(debug=True)
+
+#-----------------------------------------------------------------------------------------------------------
+#   Le nombre d'écoutes est bien entendu une information dynamique. Votre système pourrait satisfaire cette
+# fonctionnalité en exécutant une requête locale et affichant la dernière information connue ainsi que la date
+# d'acquisition. Un paramètre du système pourrait contrôler la période de validité des données locales. Par exemple,
+# si le temps écoulé entre la dernière mise à jour et le moment d’une nouvelle requête excède !!72h!!, la nouvelle
+# requête se fera auprès de l'API Web et !!!! mettra à jour la BD locale !!!!.     

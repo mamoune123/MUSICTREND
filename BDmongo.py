@@ -1,9 +1,13 @@
-import pymongo
-
+import pymongo 
+from datetime import datetime
+from collections import defaultdict
+from pymongo import MongoClient
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 
 db = client["SD2024_projet"]
+
+
 
 
 ######################
@@ -61,3 +65,55 @@ def insert_album_info_into_db(album_info):
     else:
         collection.insert_one(album_info)
         print("Données de l'album insérées avec succès dans la collection GAMMA_albums.")
+
+#########################
+#fonction LOG
+def log_consultation(type_consultation):
+    consultation_collection = db["GAMMA_LOG"]
+    
+    consultation_data = {
+        "type": type_consultation,
+        "date": datetime.now()
+    }
+    consultation_collection.insert_one(consultation_data)
+
+########################
+#pour le graphique //calcule des données pour remplire le graphique
+def count_consultations():
+    # Connexion à la base de données MongoDB
+    collection = db['GAMMA_LOG']
+
+    # Liste des types de consultation à traiter
+    consultation_types = ["artists", "tracks", "tags"]
+
+    # Dictionnaires pour stocker les résultats pour chaque type de consultation
+    artist_occurrences = {}
+    track_occurrences = {}
+    tag_occurrences = {}
+
+    # Parcours des types de consultation
+    for consultation_type in consultation_types:
+        # Requête pour compter les occurrences de chaque date pour le type actuel
+        pipeline = [
+            {"$match": {"type": consultation_type}},
+            {"$group": {"_id": {"date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$date"}}}, "count": {"$sum": 1}}},
+            {"$sort": {"_id.date": 1}}
+        ]
+
+        # Exécution de la requête
+        results = collection.aggregate(pipeline)
+
+        # Formatage des résultats sous forme de liste de tuples (occurrence, date)
+        occurrences = [(row['count'], row['_id']['date']) for row in results]
+
+        # Stockage des résultats dans le dictionnaire approprié en fonction du type de consultation
+        if consultation_type == "artists":
+            artist_occurrences = occurrences
+        elif consultation_type == "tracks":
+            track_occurrences = occurrences
+        elif consultation_type == "tags":
+            tag_occurrences = occurrences
+
+    return artist_occurrences, track_occurrences, tag_occurrences
+
+
