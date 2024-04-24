@@ -32,6 +32,8 @@
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/">Album</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/t">Tag</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/l">LOG</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/similaire">similaire</a></li>
+
                     </ul>
                 </div>
             </div>
@@ -42,21 +44,26 @@
                 <!-- Masthead Avatar Image-->
               
                     <h1>Recherche d'Album</h1>
-                    <form action="/result" method="GET">
-                        <label for="artist">Artiste:</label>
-                        <input type="text" id="artist" name="artist" required>
-                        <br>
-                        <label for="album">Album:</label>
-                        <input type="text" id="album" name="album" required>
-                        <br>
-                        <input type="submit" value="Rechercher">
+                    <form action="/result" method="GET" class="mt-4">
+                        <div class="form-group">
+                            <label for="artist">Artiste:</label>
+                            <input type="text" id="artist" name="artist" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="album">Album:</label>
+                            <input type="text" id="album" name="album" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <input type="submit" value="Rechercher" class="btn btn-light">
+                        </div>
                     </form>
-               
+                    
                 <!-- Masthead Heading-->
                 <div class="container mt-5" style="display: flex; flex-direction: column; align-items: center;">
                         <h1>Résultat de la recherche</h1>
+                        {% if message %}
                         <div class="alert alert-success" role="alert" style="width: 80%; text-align: left;">
-                            {% if message %}
+                            
                             <h3>Nombre d'auditeurs: {{ message.listeners }}</h3>
                             <h3>Date de sortie:{{ message.release_date }}</h3>
                             <h3>Nombre de lectures: {{ message.playcount }}</h3>
@@ -73,8 +80,10 @@
                                 </ul>
                             </div>
                             {% else %}
-                        <p>Aucune information.</p>
-                        {% endif %}
+                            <div class="alert alert-warning" role="alert" style="width: 80%; text-align: center;">
+                                <h1>Aucune information</h1>
+                            </div>
+                                                    {% endif %}
                         </div>
                 </div>
                 

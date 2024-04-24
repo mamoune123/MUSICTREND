@@ -32,6 +32,8 @@
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/">Album</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/t">Tag</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/l">LOG</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="/similaire">similaire</a></li>
+
 
                     </ul>
                 </div>
@@ -43,16 +45,20 @@
                 <!-- Masthead Avatar Image-->
 
                     <h1>Recherche de Tag</h1>
-                    <form action="/tag" method="GET">
-                        <label for="artist">Tag:</label>
-                        <input type="text" id="tag" name="tag" required>
-                        <br>
-                        <input type="submit" value="Rechercher">
+                    <form action="/tag" method="GET" class="mt-4">
+                        <div class="form-group">
+                            <label for="tag">Tag:</label>
+                            <input type="text" id="tag" name="tag" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <input type="submit" value="Rechercher" class="btn btn-light">
+                        </div>
                     </form>
                     
                     <div class="container mt-5" style="display: flex; flex-direction: column; align-items: center;">
+                        {% if tag_info %}
                         <div class="alert alert-success" role="alert" style="width: 80%; text-align: left;">
-                            {% if tag_info %}
+                            
                                 <h1>{{ tag_info.name }}</h1>
                                 <p><strong>Total :</strong> {{ tag_info.total }}</p>
                                 <p><strong>Reach :</strong> {{ tag_info.reach }}</p>
@@ -64,7 +70,9 @@
                                     <p><strong>Content :</strong> {{ tag_info.wiki.content | safe }}</p>
                                 </div>
                             {% else %}
-                                <p>Aucune information.</p>
+                            <div class="alert alert-warning" role="alert" style="width: 80%; text-align: center;">
+                                <h1>Aucune information</h1>
+                            </div>
                             {% endif %}
                         </div>
                     </div>

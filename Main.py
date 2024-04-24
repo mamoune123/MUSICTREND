@@ -4,13 +4,45 @@ import plotly.graph_objs as go
 import json
 import matplotlib.pyplot as plt
 from flask import Flask, redirect, render_template, request, url_for
-from BDmongo import insert_artist_info_into_db, check_artist_in_db, check_tag_in_db, insert_tag_info_into_db, check_album_in_db, insert_album_info_into_db,log_consultation,count_consultations
+from BDmongo import insert_artist_info_into_db, check_artist_in_db, check_tag_in_db, insert_tag_info_into_db, check_album_in_db, insert_album_info_into_db,log_consultation,count_consultations,insert_similaire_info_into_db, check_similiarite_in_db
 from datetime import datetime
 #API key
 XI_API_KEY = "43fd3e0df818d835e6b144ad21a7765a"
 #Url pour mongo
 
 import requests
+
+def get_similar_track(api_key, artist, track, page=1, limit=10):
+    url = 'http://ws.audioscrobbler.com/2.0/'
+    params = {
+        'method': 'track.getsimilar',
+        'artist': artist,
+        'track': track,
+        'api_key': api_key,
+        'format': 'json',
+        'page': page,
+        'limit': limit
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    tracks = data.get('similartracks', {}).get('track', [])
+    tracks_info_list = []
+    for index, track in enumerate(tracks, start=1):
+        name = track.get('name')
+        match = track.get('match')
+        artist_name = track.get('artist', {}).get('name')
+        track_info = {
+            'index': index,
+            'track_name': name,
+            'match': match,
+            'artist_name': artist_name
+        }
+        tracks_info_list.append(track_info)
+    return tracks_info_list
+
+
+
+
 
 def get_info_charttags(api_key, chart_type, page=1, limit=10):
     url = 'http://ws.audioscrobbler.com/2.0/'
@@ -38,6 +70,7 @@ def get_info_charttags(api_key, chart_type, page=1, limit=10):
         tag_info_list.append(tag_info)
     
     return tag_info_list
+
 
 
 def get_info_chartartist(api_key, chart_type, page=1, limit=10):
@@ -145,7 +178,6 @@ def get_artist_info(api_key, artist):
     return artist_info
 
 
-
 def get_album_info(api_key, artist, album):
     params = {
         'method': 'album.getinfo',
@@ -157,12 +189,18 @@ def get_album_info(api_key, artist, album):
     response = requests.get('http://ws.audioscrobbler.com/2.0/', params=params)
     data = response.json()
     album_data = data.get('album', {})
+    listeners_str = album_data.get('listeners')
+    listeners_int = int(listeners_str.replace(',', '')) if listeners_str else None 
+    playcount_str = album_data.get('playcount')
+    playcount_int = int(playcount_str.replace(',', '')) if playcount_str else None
+    
+     # Convertir en int en supprimant les virgules
     album_info = {
         'name' : album_data.get('name'),
         'artist' : album_data.get('artist'),
-        'listeners': album_data.get('listeners'),
+        'listeners': listeners_int,
         'release_date': album_data.get('releasedate'),
-        'playcount': album_data.get('playcount'),
+        'playcount': playcount_int,
         'tracks': []
     }
     tracks = album_data.get('tracks', {}).get('track', [])
@@ -175,7 +213,7 @@ def get_album_info(api_key, artist, album):
         }
         album_info['tracks'].append(track_info)
         
-    return album_info
+    return album_info   
 
 
 
@@ -203,6 +241,7 @@ def log():
     values2 = [row[0] for row in track_index]
     labels3 = [row[1] for row in tag_index]
     values3 = [row[0] for row in tag_index]
+    print(labels1)
 
     
     return render_template('log.html',labels1=labels1, labels2=labels2, labels3=labels3, values1=values1, values2=values2, values3=values3)
@@ -282,7 +321,19 @@ def result():
         insert_album_info_into_db(response)
         return render_template('Lastfm.html',message=response)
 
-
+@app.route('/similaire',methods=['POST','GET'])
+def similaire():
+    artist = request.args.get('artist')
+    track = request.args.get('track')
+    info = check_similiarite_in_db(artist,track)
+    if info:
+        print("dans la base")
+        return render_template('Similaire.html', tracks_info=info)
+    else: 
+        print("pas dans la base")
+        response = get_similar_track(XI_API_KEY,artist,track)
+        insert_similaire_info_into_db(response,artist,track)
+    return render_template('Similaire.html', tracks_info=response)
 
 
 if __name__ == '__main__':

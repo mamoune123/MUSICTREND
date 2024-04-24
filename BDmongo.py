@@ -65,6 +65,33 @@ def insert_album_info_into_db(album_info):
     else:
         collection.insert_one(album_info)
         print("Données de l'album insérées avec succès dans la collection GAMMA_albums.")
+########################
+#fonction pour les similarité
+def check_similiarite_in_db(artist, track):
+    collection = db["GAMMA_similaire"]
+    track_info_from_db = collection.find_one({"artist": artist, "track": track})
+    if track_info_from_db:
+        return track_info_from_db["similar_tracks"]
+    else:
+        return None
+
+def insert_similaire_info_into_db(tracks_info, artist, track):
+    collection = db["GAMMA_similaire"]
+
+    existing_document = collection.find_one({"artist": artist, "track": track})
+    if existing_document:
+        print("Les données des pistes similaires pour cet artiste et ce morceau existent déjà dans la collection GAMMA_similaire. Pas besoin de les insérer à nouveau.")
+    else:
+        similar_tracks_document = {
+            "artist": artist,
+            "track": track,
+            "similar_tracks": tracks_info
+        }
+        collection.insert_one(similar_tracks_document)
+        print("Données des pistes similaires insérées avec succès dans la collection GAMMA_similaire.")
+
+
+
 
 #########################
 #fonction LOG
@@ -87,9 +114,9 @@ def count_consultations():
     consultation_types = ["artists", "tracks", "tags"]
 
     # Dictionnaires pour stocker les résultats pour chaque type de consultation
-    artist_occurrences = {}
-    track_occurrences = {}
-    tag_occurrences = {}
+    artist_occurrences = []
+    track_occurrences = []
+    tag_occurrences = []
 
     # Parcours des types de consultation
     for consultation_type in consultation_types:
@@ -113,6 +140,25 @@ def count_consultations():
             track_occurrences = occurrences
         elif consultation_type == "tags":
             tag_occurrences = occurrences
+        
+        all_dates = set([date for _, date in artist_occurrences] + [date for _, date in track_occurrences] + [date for _, date in tag_occurrences])
+
+        # Vérifier chaque date pour chaque type de consultation et l'ajouter avec occurrence 0 si elle manque
+        for date in all_dates:
+            # Vérification pour artist_occurrences
+            if date not in [d for _, d in artist_occurrences]:
+                artist_occurrences.append((0, date))
+            # Vérification pour track_occurrences
+            if date not in [d for _, d in track_occurrences]:
+                track_occurrences.append((0, date))
+            # Vérification pour tag_occurrences
+            if date not in [d for _, d in tag_occurrences]:
+                tag_occurrences.append((0, date))
+
+        # Trier les occurrences par date
+        artist_occurrences.sort(key=lambda x: x[1])
+        track_occurrences.sort(key=lambda x: x[1])
+        tag_occurrences.sort(key=lambda x: x[1])
 
     return artist_occurrences, track_occurrences, tag_occurrences
 
